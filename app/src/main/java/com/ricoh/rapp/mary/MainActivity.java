@@ -27,110 +27,27 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final String url = "http://mary.dfki.de:59125/process?INPUT_TEXT=Hello+world&INPUT_TYPE=TEXT&OUTPUT_TYPE=AUDIO&AUDIO=WAVE_FILE&LOCALE=en_US";
-                Toast.makeText(MainActivity.this, "start", Toast.LENGTH_SHORT).show();
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            downloadFile(url, getFilesDir().getAbsolutePath());
-                            playWavFile();
-                        } catch (final IOException e) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    e.printStackTrace();
-                                }
-                            });
-                        }
-                    }
-                }).start();
+                playWavFile();
             }
         });
     }
 
     private void playWavFile() {
-        File file = new File(getFilesDir() + File.separator + "tts.wav");
-        if (file.exists()) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "file exits", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "file not exits", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
+        final String url = "http://mary.dfki.de:59125/process?INPUT_TEXT=hello+world&INPUT_TYPE=TEXT&OUTPUT_TYPE=AUDIO&AUDIO=WAVE_FILE&LOCALE=en_US&VOICE=cmu-slt-hsmm";
 
-        MediaPlayer mediaPlayer = new MediaPlayer();
+        final MediaPlayer mediaPlayer = new MediaPlayer();
         try {
-            mediaPlayer.setDataSource(getFilesDir() + File.separator + "tts.wav");
-            mediaPlayer.prepare();
-        } catch (final Exception e) {
+            mediaPlayer.setDataSource(url);
+            mediaPlayer.prepareAsync();
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    Log.e("xxxxxxxx", "prep");
+                    mediaPlayer.start();
+                }
+            });
+        } catch (IOException e) {
             e.printStackTrace();
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            });
         }
-    }
-
-    public void downloadFile(String fileURL, String saveDir)
-            throws IOException {
-        URL url = new URL(fileURL);
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        final int responseCode = httpConn.getResponseCode();
-
-        // always check HTTP response code first
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            String fileName = "tts.wav";
-            String contentType = httpConn.getContentType();
-            int contentLength = httpConn.getContentLength();
-
-            System.out.println("Content-Type = " + contentType);
-            System.out.println("Content-Length = " + contentLength);
-
-            // opens input stream from the HTTP connection
-            InputStream inputStream = httpConn.getInputStream();
-            String saveFilePath = saveDir + File.separator + fileName;
-
-            // opens an output stream to save into file
-            FileOutputStream outputStream = new FileOutputStream(saveFilePath);
-
-            int bytesRead;
-            byte[] buffer = new byte[1024];
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-
-            outputStream.close();
-            inputStream.close();
-
-            Log.e("123", "File downloaded");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "file downloaded", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            Log.e("123", "No file to download. Server replied HTTP code: " + responseCode);
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "No file to download. Server replied HTTP code: " + responseCode, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-        httpConn.disconnect();
     }
 }
